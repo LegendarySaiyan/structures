@@ -56,7 +56,7 @@ impl BinaryTree {
 
     pub fn tree_insert(&mut self, n: i32) {
 
-        self.insert(n);
+        self.insert(Box::new(Node::new(n)));
     }
 
     pub fn tree_delete(&mut self, n: i32) {
@@ -172,10 +172,9 @@ impl BinaryTree {
         }
     }
 
-    fn insert(&mut self, n: i32) {
+    fn insert(&mut self, node: Box<Node>) {
 
         unsafe {
-            let node = Box::new(Node::new(n));
             let mut x = self.root;
             let mut y = None;
     
@@ -187,21 +186,18 @@ impl BinaryTree {
                     x = (*(x.unwrap().as_ptr())).right;
                 }
             }
+
+            let node_ptr = Box::into_raw(node);
+            (*node_ptr).parent = y;
     
             if y.is_none() {
-                self.root = NonNull::new(Box::into_raw(node));
+                self.root = NonNull::new(node_ptr);
 
-            } else if node.value < (*(y.unwrap().as_ptr())).value {
-                let new_node = Box::into_raw(node);
-                (*(y.unwrap().as_ptr())).left = NonNull::new(new_node);
-
-                (*(new_node)).parent = NonNull::new(y.unwrap().as_ptr());
+            } else if (*node_ptr).value < (*(y.unwrap().as_ptr())).value {
+                (*(y.unwrap().as_ptr())).left = NonNull::new(node_ptr);
 
             } else {
-                let new_node = Box::into_raw(node);
-                (*(y.unwrap().as_ptr())).right = NonNull::new(new_node);
-
-                (*(new_node)).parent = NonNull::new(y.unwrap().as_ptr());
+                (*(y.unwrap().as_ptr())).right = NonNull::new(node_ptr);
             }
         }
     }
@@ -317,7 +313,7 @@ impl Node {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_inorder_tree_walk_2() {
+    fn test_binary_tree() {
         use crate::binary_tree::BinaryTree;
 
         let mut tree = BinaryTree { root: None};
